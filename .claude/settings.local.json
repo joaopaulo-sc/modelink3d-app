@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x /home/bluesball/github/modelink3d-app/backup.sh)",
+      "Bash(mkdir -p \"/home/bluesball/github/modelink3d-app/frontend/app/\\(dashboard\\)/dashboard/orders/[id]\")",
+      "Bash(docker compose *)",
+      "Bash(curl -s http://localhost:8000/settings/public)",
+      "Bash(mkdir -p /home/bluesball/github/modelink3d-app/frontend/app/vitrine/\\\\[id\\\\])",
+      "Bash(curl -s http://localhost:8000/stock/public/1)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('image_urls' in d, d.get\\('image_urls'\\)\\)\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/app)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/vitrine)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/dashboard)"
+    ],
+    "additionalDirectories": [
+      "/home/bluesball/github/modelink3d-app/frontend/app/(dashboard)/dashboard/orders",
+      "/home/bluesball/github/modelink3d-app/frontend/app/vitrine"
+    ]
+  }
+}
