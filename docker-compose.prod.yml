@@ -1,4 +1,21 @@
 services:
+  traefik:
+    image: traefik:v3.7
+    container_name: modelink_traefik
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      # Redireciona http → https (Cloudflare já entrega HTTP, mas caso acesse direto)
+      - --entrypoints.web.http.redirections.entrypoint.to=web
+      - --entrypoints.web.http.redirections.entrypoint.scheme=http
+      - --log.level=WARN
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
   db:
     image: postgres:16-alpine
     container_name: modelink_db
@@ -24,24 +41,30 @@ services:
       SECRET_KEY: ${SECRET_KEY:-changeme-use-openssl-rand-hex-32}
       FIRST_ADMIN_EMAIL: ${FIRST_ADMIN_EMAIL:-admin@modelink3d.link}
       FIRST_ADMIN_PASSWORD: ${FIRST_ADMIN_PASSWORD:-troque-esta-senha}
-    ports:
-      - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - uploads_data:/app/uploads
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`api.modelink3d.link`)"
+      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
 
   frontend:
-    image: bluesball/modelink:frontend
+    image: bluesball/modelink:frontend-prod
     container_name: modelink_frontend
     restart: unless-stopped
     environment:
       API_INTERNAL_URL: http://backend:8000
-    ports:
-      - "3000:3000"
     depends_on:
       - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`modelink3d.link`) || Host(`www.modelink3d.link`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
 
 volumes:
   postgres_data:
