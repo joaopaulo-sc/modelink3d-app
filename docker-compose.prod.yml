@@ -7,9 +7,6 @@ services:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
-      # Redireciona http → https (Cloudflare já entrega HTTP, mas caso acesse direto)
-      - --entrypoints.web.http.redirections.entrypoint.to=web
-      - --entrypoints.web.http.redirections.entrypoint.scheme=http
       - --log.level=WARN
     ports:
       - "80:80"
