@@ -7,10 +7,10 @@ import { useOrder, useClients, useMaterials, useExtraServices, useSettings } fro
 import toast from "react-hot-toast";
 import { Plus, Trash2, ArrowLeft } from "lucide-react";
 import MaterialSelector, { MaterialRow } from "@/components/ui/MaterialSelector";
+import OrderItemsEditor, { OrderItemRow } from "@/components/ui/OrderItemsEditor";
 
 type FormData = {
   client_id: string;
-  item_name: string;
   print_type: "FDM" | "Resin";
   estimated_time: string;
   deadline: string;
@@ -43,6 +43,7 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
   const { fields, append, remove, replace } = useFieldArray({ control, name: "extra_services" });
 
   const [materialRows, setMaterialRows] = useState<MaterialRow[]>([]);
+  const [itemRows, setItemRows] = useState<OrderItemRow[]>([]);
   const [suggestedPrice, setSuggestedPrice] = useState<number | null>(null);
   const [initialized, setInitialized] = useState(false);
 
@@ -50,7 +51,6 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
     if (!order || initialized) return;
     reset({
       client_id: order.client_id ? String(order.client_id) : "",
-      item_name: order.item_name,
       print_type: order.print_type,
       estimated_time: order.estimated_time ? String(order.estimated_time) : "",
       deadline: toLocalDatetime(order.deadline),
@@ -64,6 +64,15 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
         notes: es.notes ?? "",
       })),
     });
+    if (order.items?.length > 0) {
+      setItemRows(order.items.map((it: any) => ({
+        item_name: it.item_name,
+        quantity: String(it.quantity),
+        unit_price: it.unit_price != null ? String(it.unit_price) : "",
+      })));
+    } else {
+      setItemRows([{ item_name: order.item_name ?? "", quantity: "1", unit_price: order.sell_price != null ? String(order.sell_price) : "" }]);
+    }
     if (order.materials?.length > 0) {
       setMaterialRows(order.materials.map((om: any) => ({
         material_id: String(om.material_id),
@@ -94,11 +103,15 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
   }, [materialRows, watchedTime, watchedType, watchedExtras, settings, materials]);
 
   const onSubmit = async (data: FormData) => {
+    const validItems = itemRows.filter(r => r.item_name.trim());
+    if (validItems.length === 0) {
+      toast.error("Adicione ao menos um item ao pedido");
+      return;
+    }
     const validMaterials = materialRows.filter(r => r.material_id);
     try {
       await api.put(`/orders/${id}`, {
         client_id: data.client_id ? Number(data.client_id) : null,
-        item_name: data.item_name,
         print_type: data.print_type,
         estimated_time: data.estimated_time ? Number(data.estimated_time) : null,
         deadline: data.deadline || null,
@@ -106,6 +119,11 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
         sell_price: data.sell_price ? Number(data.sell_price) : null,
         notes: data.notes || null,
         file_url: data.file_url || null,
+        items: validItems.map(r => ({
+          item_name: r.item_name.trim(),
+          quantity: Number(r.quantity) || 1,
+          unit_price: r.unit_price ? Number(r.unit_price) : null,
+        })),
         materials: validMaterials.map(r => ({
           material_id: Number(r.material_id),
           estimated_weight: r.estimated_weight ? Number(r.estimated_weight) : null,
@@ -144,8 +162,8 @@ export default function EditOrderPage({ params }: { params: Promise<{ id: string
         <div className="card space-y-4">
           <h2 className="font-semibold text-slate-300">Informações do Pedido</h2>
           <div>
-            <label className="label">Nome da Peça *</label>
-            <input className="input" {...register("item_name", { required: true })} />
+            <label className="label">Itens do Pedido *</label>
+            <OrderItemsEditor value={itemRows} onChange={setItemRows} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

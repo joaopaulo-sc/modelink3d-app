@@ -149,7 +149,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <ArrowLeft size={18} />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold truncate">{order.item_name}</h1>
+          <h1 className="text-xl font-bold truncate">
+            {order.item_name || (order.items?.[0]?.item_name ?? `Pedido #${order.id}`)}
+          </h1>
           <p className="text-slate-400 text-sm">Pedido #{order.id}</p>
         </div>
         <div className="flex gap-2 shrink-0">
@@ -221,8 +223,33 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         )}
       </Section>
 
+      {/* Itens do pedido */}
+      {order.items?.length > 0 && (
+        <Section title="Itens do Pedido">
+          <div className="space-y-2">
+            {order.items.map((item: any) => (
+              <div key={item.id} className="flex items-center justify-between text-sm gap-4">
+                <span className="font-medium flex-1">{item.item_name}</span>
+                <span className="text-slate-400 shrink-0">x{item.quantity}</span>
+                {item.unit_price != null && (
+                  <span className="text-slate-300 shrink-0">
+                    R$ {(item.unit_price * item.quantity).toFixed(2)}
+                  </span>
+                )}
+              </div>
+            ))}
+            {order.items.some((it: any) => it.unit_price != null) && (
+              <div className="flex justify-between text-sm font-semibold border-t border-slate-700 pt-2 mt-1">
+                <span className="text-slate-400">Subtotal dos itens</span>
+                <span>R$ {order.items.reduce((s: number, it: any) => s + (it.unit_price || 0) * it.quantity, 0).toFixed(2)}</span>
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
+
       {/* Detalhes da peça */}
-      <Section title="Detalhes da Peça">
+      <Section title="Detalhes">
         <Row label="Tipo" value={order.print_type} />
         <Row label="Peso estimado" value={order.estimated_weight ? `${order.estimated_weight}g` : null} />
         <Row label="Peso real" value={order.actual_weight ? `${order.actual_weight}g` : null} />

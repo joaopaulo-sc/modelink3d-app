@@ -20,7 +20,7 @@ class Order(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     client_id: Mapped[Optional[int]] = mapped_column(ForeignKey("clients.id"), nullable=True)
-    item_name: Mapped[str] = mapped_column(String(255))
+    item_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     file_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus), default=OrderStatus.BUDGET)
     print_type: Mapped[str] = mapped_column(String(10))
@@ -48,6 +48,9 @@ class Order(Base):
     )
     materials: Mapped[List["OrderMaterial"]] = relationship(
         "OrderMaterial", back_populates="order", cascade="all, delete-orphan"
+    )
+    items: Mapped[List["OrderItem"]] = relationship(
+        "OrderItem", back_populates="order", cascade="all, delete-orphan", order_by="OrderItem.id"
     )
 
 
@@ -86,3 +89,15 @@ class OrderExtraService(Base):
 
     order: Mapped["Order"] = relationship("Order", back_populates="extra_services")
     extra_service: Mapped["ExtraService"] = relationship("ExtraService")
+
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
+    item_name: Mapped[str] = mapped_column(String(255))
+    quantity: Mapped[int] = mapped_column(Integer, default=1)
+    unit_price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    order: Mapped["Order"] = relationship("Order", back_populates="items")

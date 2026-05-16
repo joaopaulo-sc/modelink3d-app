@@ -34,6 +34,21 @@ class OrderMaterialOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class OrderItemIn(BaseModel):
+    item_name: str
+    quantity: int = 1
+    unit_price: Optional[float] = None
+
+
+class OrderItemOut(BaseModel):
+    id: int
+    item_name: str
+    quantity: int
+    unit_price: Optional[float]
+
+    model_config = {"from_attributes": True}
+
+
 class OrderStatusHistoryOut(BaseModel):
     id: int
     status: OrderStatus
@@ -45,7 +60,7 @@ class OrderStatusHistoryOut(BaseModel):
 
 class OrderCreate(BaseModel):
     client_id: Optional[int] = None
-    item_name: str
+    item_name: Optional[str] = None
     file_url: Optional[str] = None
     print_type: str
     estimated_weight: Optional[float] = None
@@ -57,6 +72,7 @@ class OrderCreate(BaseModel):
     deadline: Optional[datetime] = None
     extra_services: List[OrderExtraServiceIn] = []
     materials: List[OrderMaterialIn] = []
+    items: List[OrderItemIn] = []
 
 
 class OrderUpdate(BaseModel):
@@ -74,6 +90,7 @@ class OrderUpdate(BaseModel):
     deadline: Optional[datetime] = None
     extra_services: Optional[List[OrderExtraServiceIn]] = None
     materials: Optional[List[OrderMaterialIn]] = None
+    items: Optional[List[OrderItemIn]] = None
 
 
 class OrderStatusUpdate(BaseModel):
@@ -94,7 +111,7 @@ class OrderFailureUpdate(BaseModel):
 class OrderOut(BaseModel):
     id: int
     client_id: Optional[int]
-    item_name: str
+    item_name: Optional[str]
     file_url: Optional[str]
     status: OrderStatus
     print_type: str
@@ -112,6 +129,7 @@ class OrderOut(BaseModel):
     deadline: Optional[datetime]
     extra_services: List[OrderExtraServiceOut] = []
     materials: List[OrderMaterialOut] = []
+    items: List[OrderItemOut] = []
     status_history: List[OrderStatusHistoryOut] = []
     client_name: Optional[str] = None
 

@@ -49,24 +49,39 @@ def generate_invoice_pdf(order) -> bytes:
     elements.append(Paragraph("Detalhes do Serviço", bold))
     service_data = [[
         Paragraph("Descrição", white_bold),
-        Paragraph("Tipo", white_bold),
-        Paragraph("Valor", white_bold),
+        Paragraph("Qtd", white_bold),
+        Paragraph("Valor Unit.", white_bold),
+        Paragraph("Subtotal", white_bold),
     ]]
-    service_data.append([
-        Paragraph(order.item_name, normal),
-        Paragraph(order.print_type, normal),
-        Paragraph(f"R$ {order.sell_price or 0:.2f}", right),
-    ])
+
+    items_to_show = getattr(order, "items", None) or []
+    if items_to_show:
+        for item in items_to_show:
+            subtotal = (item.unit_price or 0) * item.quantity
+            service_data.append([
+                Paragraph(item.item_name, normal),
+                Paragraph(str(item.quantity), normal),
+                Paragraph(f"R$ {item.unit_price:.2f}" if item.unit_price else "—", right),
+                Paragraph(f"R$ {subtotal:.2f}" if item.unit_price else "—", right),
+            ])
+    else:
+        service_data.append([
+            Paragraph(order.item_name or "—", normal),
+            Paragraph("1", normal),
+            Paragraph(f"R$ {order.sell_price or 0:.2f}", right),
+            Paragraph(f"R$ {order.sell_price or 0:.2f}", right),
+        ])
 
     for es in order.extra_services:
         name = es.extra_service.name if es.extra_service else f"Serviço #{es.extra_service_id}"
         service_data.append([
             Paragraph(name, normal),
-            Paragraph("Extra", normal),
+            Paragraph("1", normal),
+            Paragraph(f"R$ {es.price:.2f}", right),
             Paragraph(f"R$ {es.price:.2f}", right),
         ])
 
-    t2 = Table(service_data, colWidths=[90*mm, 40*mm, 50*mm])
+    t2 = Table(service_data, colWidths=[75*mm, 20*mm, 40*mm, 45*mm])
     t2.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a1a2e")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),

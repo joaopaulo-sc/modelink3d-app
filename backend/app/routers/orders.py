@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models.order import Order, OrderStatus, OrderStatusHistory, OrderExtraService, OrderMaterial
+from app.models.order import Order, OrderStatus, OrderStatusHistory, OrderExtraService, OrderMaterial, OrderItem
 from app.models.material import Material
 from app.models.settings import SystemSettings
 from app.schemas.order import (
@@ -24,6 +24,7 @@ LOAD_OPTS = [
     selectinload(Order.status_history),
     selectinload(Order.client),
     selectinload(Order.materials).selectinload(OrderMaterial.material),
+    selectinload(Order.items),
 ]
 
 
@@ -91,10 +92,14 @@ async def list_orders(
 
 @router.post("", response_model=OrderOut, status_code=201)
 async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    payload = data.model_dump(exclude={"extra_services", "materials"})
-    # set primary material_id from first material in list if provided
+    payload = data.model_dump(exclude={"extra_services", "materials", "items"})
     if data.materials and not payload.get("material_id"):
         payload["material_id"] = data.materials[0].material_id
+    if data.items:
+        if len(data.items) == 1:
+            payload["item_name"] = data.items[0].item_name
+        else:
+            payload["item_name"] = f"{data.items[0].item_name} (+ {len(data.items) - 1} item{'ns' if len(data.items) > 2 else ''})"
 
     order = Order(**payload)
     db.add(order)
@@ -105,6 +110,9 @@ async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db), _=
 
     for mat_data in data.materials:
         db.add(OrderMaterial(order_id=order.id, **mat_data.model_dump()))
+
+    for item_data in data.items:
+        db.add(OrderItem(order_id=order.id, **item_data.model_dump()))
 
     db.add(OrderStatusHistory(order_id=order.id, status=OrderStatus.BUDGET))
 
@@ -124,7 +132,7 @@ async def get_order(order_id: int, db: AsyncSession = Depends(get_db), _=Depends
 async def update_order(order_id: int, data: OrderUpdate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
     order = await _get_or_404(order_id, db)
 
-    for k, v in data.model_dump(exclude_unset=True, exclude={"extra_services", "materials"}).items():
+    for k, v in data.model_dump(exclude_unset=True, exclude={"extra_services", "materials", "items"}).items():
         setattr(order, k, v)
 
     if data.extra_services is not None:
@@ -137,6 +145,16 @@ async def update_order(order_id: int, data: OrderUpdate, db: AsyncSession = Depe
         for mat_data in data.materials:
             db.add(OrderMaterial(order_id=order_id, **mat_data.model_dump()))
         order.material_id = data.materials[0].material_id if data.materials else None
+
+    if data.items is not None:
+        await db.execute(delete(OrderItem).where(OrderItem.order_id == order_id))
+        for item_data in data.items:
+            db.add(OrderItem(order_id=order_id, **item_data.model_dump()))
+        if data.items:
+            if len(data.items) == 1:
+                order.item_name = data.items[0].item_name
+            else:
+                order.item_name = f"{data.items[0].item_name} (+ {len(data.items) - 1} item{'ns' if len(data.items) > 2 else ''})"
 
     await db.flush()
     order = await _get_or_404(order_id, db)

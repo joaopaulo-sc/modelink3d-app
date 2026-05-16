@@ -29,6 +29,18 @@ async def lifespan(app: FastAPI):
             "estimated_weight FLOAT"
             ")"
         ))
+        await conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS order_items ("
+            "id SERIAL PRIMARY KEY, "
+            "order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE, "
+            "item_name VARCHAR(255) NOT NULL, "
+            "quantity INTEGER NOT NULL DEFAULT 1, "
+            "unit_price FLOAT"
+            ")"
+        ))
+        await conn.execute(text(
+            "ALTER TABLE orders ALTER COLUMN item_name DROP NOT NULL"
+        ))
 
     async with AsyncSessionLocal() as db:
         from app.models.user import User

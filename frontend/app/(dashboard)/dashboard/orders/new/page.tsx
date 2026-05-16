@@ -7,10 +7,10 @@ import { useClients, useMaterials, useExtraServices, useSettings, useCatalog } f
 import toast from "react-hot-toast";
 import { Plus, Trash2, BookOpen, X } from "lucide-react";
 import MaterialSelector, { MaterialRow } from "@/components/ui/MaterialSelector";
+import OrderItemsEditor, { OrderItemRow } from "@/components/ui/OrderItemsEditor";
 
 type FormData = {
   client_id: string;
-  item_name: string;
   print_type: "FDM" | "Resin";
   estimated_time: string;
   deadline: string;
@@ -34,6 +34,7 @@ export default function NewOrderPage() {
   const { fields, append, remove } = useFieldArray({ control, name: "extra_services" });
 
   const [materialRows, setMaterialRows] = useState<MaterialRow[]>([]);
+  const [itemRows, setItemRows] = useState<OrderItemRow[]>([{ item_name: "", quantity: "1", unit_price: "" }]);
   const [suggestedPrice, setSuggestedPrice] = useState<number | null>(null);
   const [sellPrice, setSellPrice] = useState("");
   const [selectedCatalogItem, setSelectedCatalogItem] = useState<any>(null);
@@ -59,11 +60,16 @@ export default function NewOrderPage() {
   }, [materialRows, watchedTime, watchedType, watchedExtras, settings, materials]);
 
   const applyCatalogItem = (item: any) => {
-    setValue("item_name", item.name);
     setValue("print_type", item.print_type);
     if (item.default_time) setValue("estimated_time", String(item.default_time));
     if (item.file_url) setValue("file_url", item.file_url);
     if (item.notes) setValue("notes", item.notes);
+    setItemRows(rows => {
+      if (rows.length === 1 && !rows[0].item_name) {
+        return [{ ...rows[0], item_name: item.name }];
+      }
+      return rows;
+    });
     setSelectedCatalogItem(item);
     setShowCatalogPicker(false);
     setCatalogSearch("");
@@ -76,18 +82,28 @@ export default function NewOrderPage() {
   );
 
   const onSubmit = async (data: FormData) => {
+    const validItems = itemRows.filter(r => r.item_name.trim());
+    if (validItems.length === 0) {
+      toast.error("Adicione ao menos um item ao pedido");
+      return;
+    }
     const validMaterials = materialRows.filter(r => r.material_id);
+    const itemsTotal = validItems.reduce((s, r) => s + (Number(r.unit_price) || 0) * (Number(r.quantity) || 1), 0);
     try {
       await api.post("/orders", {
         client_id: data.client_id ? Number(data.client_id) : null,
-        item_name: data.item_name,
         print_type: data.print_type,
         estimated_time: data.estimated_time ? Number(data.estimated_time) : null,
         deadline: data.deadline || null,
         down_payment: Number(data.down_payment) || 0,
-        sell_price: sellPrice ? Number(sellPrice) : (suggestedPrice ?? null),
+        sell_price: sellPrice ? Number(sellPrice) : (itemsTotal > 0 ? itemsTotal : (suggestedPrice ?? null)),
         notes: data.notes || null,
         file_url: data.file_url || null,
+        items: validItems.map(r => ({
+          item_name: r.item_name.trim(),
+          quantity: Number(r.quantity) || 1,
+          unit_price: r.unit_price ? Number(r.unit_price) : null,
+        })),
         materials: validMaterials.map(r => ({
           material_id: Number(r.material_id),
           estimated_weight: r.estimated_weight ? Number(r.estimated_weight) : null,
@@ -201,8 +217,8 @@ export default function NewOrderPage() {
         <div className="card space-y-4">
           <h2 className="font-semibold text-slate-300">Informações do Pedido</h2>
           <div>
-            <label className="label">Nome da Peça *</label>
-            <input className="input" {...register("item_name", { required: true })} placeholder="Ex: Suporte parede" />
+            <label className="label">Itens do Pedido *</label>
+            <OrderItemsEditor value={itemRows} onChange={setItemRows} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

@@ -76,7 +76,9 @@ export default function OrdersPage() {
             <div key={order.id} className={`card flex items-center gap-3 ${isOverdue ? "border-red-500/50" : isUrgent ? "border-yellow-500/50" : ""}`}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium truncate">{order.item_name}</span>
+                  <span className="font-medium truncate">
+                    {order.item_name || (order.items?.[0]?.item_name ?? `Pedido #${order.id}`)}
+                  </span>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[order.status]}`}>
                     {STATUS_LABELS[order.status]}
                   </span>
