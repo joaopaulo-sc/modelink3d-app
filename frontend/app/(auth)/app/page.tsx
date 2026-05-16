@@ -39,7 +39,6 @@ function LoginForm() {
               className="input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@modelink.local"
               required
               autoComplete="email"
             />

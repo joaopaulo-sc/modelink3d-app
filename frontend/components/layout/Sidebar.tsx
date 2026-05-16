@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ClipboardList, Columns3, Users, Package, Printer, ShoppingBag, Settings, LogOut, BookOpen } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Columns3, Users, Package, Printer, ShoppingBag, Settings, LogOut, BookOpen, UserCog } from "lucide-react";
 import { logout } from "@/lib/api";
 import clsx from "clsx";
 
@@ -14,6 +14,7 @@ const nav = [
   { href: "/dashboard/materials", label: "Materiais", icon: Package },
   { href: "/dashboard/printers", label: "Impressoras", icon: Printer },
   { href: "/dashboard/stock", label: "Pronta Entrega", icon: ShoppingBag },
+  { href: "/dashboard/users", label: "Usuários", icon: UserCog },
   { href: "/dashboard/settings", label: "Configurações", icon: Settings },
 ];
 

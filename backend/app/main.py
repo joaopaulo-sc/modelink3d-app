@@ -8,7 +8,7 @@ from app.database import engine, AsyncSessionLocal, Base
 from app.models import *  # noqa: F401,F403 — registers all models with Base
 from app.core.config import settings
 from app.core.security import hash_password
-from app.routers import auth, clients, printers, materials, extra_services, orders, stock, settings as settings_router, catalog, upload
+from app.routers import auth, clients, printers, materials, extra_services, orders, stock, settings as settings_router, catalog, upload, users
 
 
 @asynccontextmanager
@@ -69,6 +69,7 @@ app.include_router(stock.router)
 app.include_router(settings_router.router)
 app.include_router(catalog.router)
 app.include_router(upload.router)
+app.include_router(users.router)
 
 
 @app.get("/health")

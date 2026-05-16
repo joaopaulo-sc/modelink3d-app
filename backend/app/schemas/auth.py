@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 
@@ -11,8 +12,14 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+
 class UserOut(BaseModel):
     id: int
     email: str
+    created_at: datetime
 
     model_config = {"from_attributes": True}

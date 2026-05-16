@@ -22,8 +22,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-modelink}:${POSTGRES_PASSWORD:-modelink123}@db:5432/${POSTGRES_DB:-modelink3d}
       SECRET_KEY: ${SECRET_KEY:-changeme-use-openssl-rand-hex-32}
-      FIRST_ADMIN_EMAIL: ${FIRST_ADMIN_EMAIL:-admin@modelink.local}
-      FIRST_ADMIN_PASSWORD: ${FIRST_ADMIN_PASSWORD:-admin123}
+      FIRST_ADMIN_EMAIL: ${FIRST_ADMIN_EMAIL:-admin@modelink3d.link}
+      FIRST_ADMIN_PASSWORD: ${FIRST_ADMIN_PASSWORD:-troque-esta-senha}
     ports:
       - "8000:8000"
     depends_on:
