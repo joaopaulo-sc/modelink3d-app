@@ -1,8 +1,17 @@
 import axios from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+function getBaseURL() {
+  if (typeof window === "undefined") {
+    // Lado servidor (SSR/middleware): usa URL interna do Docker
+    return process.env.API_INTERNAL_URL || "http://backend:8000";
+  }
+  // Lado cliente: deriva o IP do hostname atual do browser, porta 8000
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  const { protocol, hostname } = window.location;
+  return `${protocol}//${hostname}:8000`;
+}
 
-export const api = axios.create({ baseURL: API_URL });
+export const api = axios.create({ baseURL: getBaseURL() });
 
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
